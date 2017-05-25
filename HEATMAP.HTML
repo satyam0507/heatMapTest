@@ -1,0 +1,80 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src='heatmap.js'></script>
+</head>
+<body>
+<style type="text/css">
+	#heatmapContainer{
+		height: 10px;
+		width: 20px;
+	}
+
+</style>
+<script type="text/javascript">
+var config = {
+  container: document.getElementById('heatmapContainer'),
+  radius: 10,
+  maxOpacity: .5,
+  minOpacity: 0,
+  blur: .75
+};
+// create heatmap with configuration
+var heatmapInstance = h337.create(config);
+document.querySelector('.demo-wrapper').onmousemove = function(ev) {
+  heatmapInstance.addData({
+    x: ev.layerX,
+    y: ev.layerY,
+    value: 1
+  });
+};
+</script>
+
+<div id="heatmapContainer" style="height: 400px;width: 400px;background-color: #b1ffe2;">
+	
+
+</div>
+</body>
+</html> -->
+  <!DOCTYPE html>
+    <html>
+    <head>
+    	<script>
+    	var coordinatesX =[];
+        var coordinatesY =[];
+    	function getPos(e){
+    		x=e.pageX;
+    		y=e.pageY;
+    		cursor="Your Mouse Position Is : " + x + " and " + y ;
+    		document.getElementById("displayArea").innerHTML=cursor;
+    	   
+    	}
+    	function getclickPos(e){
+    		x=e.pageX;
+    		y=e.pageY;
+    		cursor2="Your Mouse click Position Is : " + x + " and " + y + "and records are X = " + coordinatesX + " y = " + coordinatesY;
+    		document.getElementById("displayArea2").innerHTML=cursor2;
+    		coordinatesX.push(x);
+            coordinatesY.push(y);
+                
+
+    	}
+    	function stopTracking(){
+    		document.getElementById("displayArea").innerHTML="";
+    	}
+    	
+    	
+    	</script>
+    </head>
+    
+    <body onmousemove="getPos(event)" onmouseout="stopTracking()">
+    	<div id="focusArea" onclick="getclickPos(event)"   style="height: 800px; background-color: #ddd;"><p>Mouse Over This Text And Get The Cursor Position!</p></div>
+    	
+    	<p id="displayArea"> </p>
+    	<p id="displayArea2"> </p>
+    	<div id="XY">
+
+    	</div>
+    </body>
+    </html>
