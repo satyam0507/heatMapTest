@@ -1,12 +1,11 @@
-var express = require('express');
-var app = express();
-var exphbs = require('express-handlebars');
+const express = require('express'),
+    app = express(),
+    exphbs = require('express-handlebars'),
+    admin = require("firebase-admin"),
+    http = require('http').Server(app),
+    url = require('url'),
+    io = require('socket.io')(http);
 
-var admin = require("firebase-admin");
-
-const http = require('http');
-const url = require('url');
-const WebSocket = require('ws');
 
 
 var serviceAccount = require("./static/privateKeys.json");
@@ -15,24 +14,6 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://heatmap-1a704.firebaseio.com"
 });
-
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
-//web socket
-
-wss.on('connection', function connection(ws, req) {
-    const location = url.parse(req.url, true);
-    // You might use location.query.access_token to authenticate or share sessions
-    // or req.headers.cookie (see http://stackoverflow.com/a/16395220/151312)
-
-    ws.on('message', function incoming(message) {
-        console.log('received: %s', message);
-    });
-
-    ws.send('something');
-});
-//web socket ends
 
 app.engine('hbs', exphbs({
     defaultLayout: 'main',
@@ -45,16 +26,22 @@ app.set('view engine', 'hbs');
 app.use('/', express.static('static'));
 
 app.get('/', function (req, res) {
-    res.render('input', { input: true });
+    res.render('input', {
+        input: true
+    });
 })
 app.get('/display', function (req, res) {
-    res.render('display', { dispay: true });
+    res.render('display', {
+        dispay: true
+    });
 })
 app.get('/input', function (req, res) {
-    res.render('input', { input: true });
+    res.render('input', {
+        input: true
+    });
 })
 
-app.listen(3000, function () {
+http.listen(3000, function () {
     console.log('Example app listening on port 3000!')
 })
 
@@ -69,23 +56,62 @@ dataRef.on('child_changed', function (snapshot, prevChildKey) {
     var data = JSON.parse(readAbleData);
     var input = data;
     var newArray = [];
-    do {
-        var oldObj = {
-            x: input[0].x,
-            y: input[0].y
-        }
-        var obj = modifyArray(input);
-        oldObj.count = obj.count;
-        newArray.push(oldObj);
-        input = obj.newData;
-    } while (input.length > 0);
+    if (input.length) {
+        do {
+            var oldObj = {
+                x: input[0].x,
+                y: input[0].y
+            }
+            var obj = modifyArray(input);
+            oldObj.count = obj.count;
+            newArray.push(oldObj);
+            input = obj.newData;
+        } while (input.length > 0);
 
-    saveToDB(newArray);
+        saveToDB(newArray);
+    }
 
 });
 
+
+io.on('connection', function (socket) {
+    console.log('a user connected');
+    var points = [];
+    socket.on('mouseClick', function (msg) {
+        console.log('points recieved');
+        if (msg) {
+            var point = {
+                x: msg.x,
+                y: msg.y,
+            };
+            points.push(point);
+        }
+
+    });
+    socket.on('disconnect', function (evt) {
+        saveToDBPoints(points);
+        console.log('user disconnected');
+    });
+});
+
+function saveToDBPoints(points) {
+    var pointsRef = dataRef;
+    var data = {
+        data: JSON.stringify(points)
+    };
+    pointsRef.update(data).then(function (res) {
+        console.log('saved');
+    }).catch(function (err) {
+        console.log(err);
+    })
+
+
+}
+
 function saveToDB(data) {
-    newRef.update({ data: JSON.stringify(data) }).then(function (res) {
+    newRef.update({
+        data: JSON.stringify(data)
+    }).then(function (res) {
         console.log('done');
     }).catch(function (err) {
         console.log(err);
@@ -111,4 +137,3 @@ function modifyArray(data) {
         count: count
     }
 }
-
