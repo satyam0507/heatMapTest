@@ -1,6 +1,9 @@
 var points = [];
 var coordinatesX = [];
 var coordinatesY = [];
+var selectorArray = [];
+var startTime;
+var endTime;
 
 function getPos(e) {
     x = e.pageX;
@@ -13,6 +16,7 @@ function getPos(e) {
 function getclickPos(e) {
     x = e.pageX;
     y = e.pageY;
+    var selector = selectorQuery(e.target);
     cursor2 = "Your Mouse click Position Is : " + x + " and " + y + "and records are X = " + coordinatesX + " y = " + coordinatesY;
     document.getElementById("displayArea2").innerHTML = cursor2;
     point = {
@@ -20,6 +24,9 @@ function getclickPos(e) {
         y: y,
     };
     points.push(point);
+    selectorArray.push(selector);
+
+
 
     // saveToDB(points);
 
@@ -45,11 +52,19 @@ function jsonp(url, params) {
     return url + query;
 }
 
-window.addEventListener('unload', saveData, false);
+
 
 function saveData() {
+    endTime = new Date();
     var dataToSend = {
-        data: points
+        data: {
+            coord: points,
+            selector: selectorArray,
+            domain: location.origin,
+            path: location.pathname,
+            activeTime: TimeMe.getTimeOnCurrentPageInSeconds(),
+            timeOnPage: Math.abs((endTime - startTime) / 1000)
+        }
     }
     window.navigator.sendBeacon ? sendUsingBeacon(dataToSend) : makeXMLRequest(dataToSend);
 }
@@ -68,13 +83,43 @@ function makeXMLRequest(dataToSend) {
 function sendUsingBeacon(dataToSend) {
     if (!dataToSend) {
         var dataToSend = {
-            data: points
+            data: {
+                coord: points,
+                selector: selectorArray,
+                domain: location.origin,
+                path: location.pathname,
+                activeTime: TimeMe.getTimeOnCurrentPageInSeconds(),
+                timeOnPage: Math.abs((endTime - startTime) / 1000)
+            }
         }
     }
 
     // var url = jsonp('https://devheat.notifyvisitors.com/s/collect?ha=ha',dataToSend);
     navigator.sendBeacon('https://devheat.notifyvisitors.com/s/collect', JSON.stringify(dataToSend));
 }
+
+function DOMContentListner(event) {
+    startTime = new Date();
+    TimeMe.initialize({
+        currentPageName: location.href, // current page
+        idleTimeoutInSeconds: 30 // seconds
+    });
+}
+
+window.addEventListener('DOMContentLoaded', DOMContentListner);
+window.addEventListener('unload', saveData, false);
+
+
+
+
+
+
+
+
+
+
+
+
 // function saveToDB(points) {
 //     var dbRef = firebase.database().ref();
 //     var pointsRef = dbRef.child('/points');
